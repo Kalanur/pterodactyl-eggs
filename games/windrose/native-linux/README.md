@@ -24,7 +24,10 @@ shutdown and backup restore. Do not migrate both production servers together.
 4. For Direct Connect, expose the primary allocation through both TCP and UDP.
 
 The installer uses `skopeo` and `umoci`; it does not require access to the host
-Docker socket.
+Docker socket. Image download and extraction are staged below
+`/mnt/server/.windrose-install` because the installer container's `/tmp`
+filesystem may be too small for the official image. The staging directory is
+removed automatically after a successful installation.
 
 ## Updating
 
@@ -33,10 +36,19 @@ is updated. The installer preserves:
 
 - `R5/Saved/`
 - `R5/ServerDescription.json`
-- `.windrose-deployment-id`
-- `.windrose-image-digest`
 
-Create a Pterodactyl backup before reinstalling.
+Application files and the recorded deployment/image metadata are replaced with
+the newly downloaded version. Create a Pterodactyl backup before reinstalling.
+
+If installation fails after the existing persistent files have been moved,
+recovery data is deliberately retained in:
+
+```text
+/mnt/server/.windrose-install/persistent
+```
+
+Do not run another reinstall until that directory has been inspected and any
+required data has been restored.
 
 ## Migration from the Wine egg
 
