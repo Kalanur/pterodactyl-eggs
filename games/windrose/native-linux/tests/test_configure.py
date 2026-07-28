@@ -7,10 +7,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-SCRIPT = (
-    Path(__file__).resolve().parents[4]
-    / "images/windrose-native/windrose-configure.py"
-)
+REPOSITORY_ROOT = Path(__file__).resolve().parents[4]
+CONFIGURE_SCRIPT = REPOSITORY_ROOT / "images/windrose-native/windrose-configure.py"
+REPORT_SCRIPT = REPOSITORY_ROOT / "images/windrose-native/windrose-report.py"
 
 
 class ConfigureTests(unittest.TestCase):
@@ -33,7 +32,7 @@ class ConfigureTests(unittest.TestCase):
         if extra_env:
             env.update(extra_env)
         return subprocess.run(
-            ["python3", str(SCRIPT)], env=env, text=True, capture_output=True, check=False
+            ["python3", str(CONFIGURE_SCRIPT)], env=env, text=True, capture_output=True, check=False
         )
 
     def test_fresh_config_and_stable_identity(self):
@@ -86,6 +85,79 @@ class ConfigureTests(unittest.TestCase):
             ]
             self.assertEqual(persistent["InviteCode"], "Existing1")
             self.assertEqual(persistent["WorldIslandId"], "WORLD123")
+
+    def test_non_empty_variables_override_generated_values(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            path = root / "R5/ServerDescription.json"
+            path.parent.mkdir(parents=True)
+            path.write_text(
+                json.dumps(
+                    {
+                        "Version": 1,
+                        "ServerDescription_Persistent": {
+                            "PersistentServerId": "A" * 32,
+                            "InviteCode": "Generated1",
+                            "WorldIslandId": "GENERATED_WORLD",
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            result = self.run_configure(
+                root,
+                {"INVITE_CODE": "Imported1", "WORLD_ISLAND_ID": "IMPORTED_WORLD"},
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            persistent = json.loads(path.read_text(encoding="utf-8"))[
+                "ServerDescription_Persistent"
+            ]
+            self.assertEqual(persistent["InviteCode"], "Imported1")
+            self.assertEqual(persistent["WorldIslandId"], "IMPORTED_WORLD")
+
+    def test_report_writes_effective_values(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            config_path = root / "R5/ServerDescription.json"
+            config_path.parent.mkdir(parents=True)
+            config_path.write_text(
+                json.dumps(
+                    {
+                        "DeploymentId": "deployment",
+                        "ServerDescription_Persistent": {
+                            "PersistentServerId": "A" * 32,
+                            "InviteCode": "Invite123",
+                            "WorldIslandId": "WORLD123",
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            output_path = root / "R5/GeneratedServerValues.txt"
+            env = os.environ.copy()
+            env.update(
+                {
+                    "WINDROSE_SERVER_ROOT": str(root),
+                    "WINDROSE_CONFIG_PATH": str(config_path),
+                    "WINDROSE_VALUES_PATH": str(output_path),
+                    "WINDROSE_UPSTREAM_DIGEST": "sha256:test",
+                    "INVITE_CODE": "",
+                    "WORLD_ISLAND_ID": "",
+                }
+            )
+            result = subprocess.run(
+                ["python3", str(REPORT_SCRIPT)],
+                env=env,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            content = output_path.read_text(encoding="utf-8")
+            self.assertIn("INVITE_CODE=Invite123", content)
+            self.assertIn("WORLD_ISLAND_ID=WORLD123", content)
+            self.assertIn("WINDROSE_UPSTREAM_DIGEST=sha256:test", content)
+            self.assertIn("generated/preserved config", result.stdout)
 
     def test_invalid_json_is_not_overwritten(self):
         with tempfile.TemporaryDirectory() as temporary:
