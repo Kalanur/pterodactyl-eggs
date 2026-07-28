@@ -2,6 +2,7 @@
 set -euo pipefail
 
 cd /home/container
+mkdir -p /home/container/R5/Saved/.windrose-var-tmp
 
 if [[ -n "${STARTUP:-}" ]]; then
     exec /bin/bash -lc "${STARTUP}"
