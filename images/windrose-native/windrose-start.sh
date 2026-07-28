@@ -1,18 +1,19 @@
 #!/bin/bash
 set -euo pipefail
 
+readonly APPLICATION_ROOT="${WINDROSE_APPLICATION_ROOT:-/opt/windrose}"
 readonly SERVER_ROOT="${WINDROSE_SERVER_ROOT:-/home/container}"
-readonly SERVER_BINARY="${SERVER_ROOT}/R5/Binaries/Linux/WindroseServer-Linux-Shipping"
+readonly SERVER_BINARY="${APPLICATION_ROOT}/R5/Binaries/Linux/WindroseServer-Linux-Shipping"
 
 if [[ ! -f "${SERVER_BINARY}" ]]; then
-    echo "Windrose native Linux binary not found: ${SERVER_BINARY}" >&2
-    echo "Run the Pterodactyl reinstall process to download the official Docker payload." >&2
+    echo "Windrose native Linux binary not found in runtime image: ${SERVER_BINARY}" >&2
     exit 1
 fi
 
-chmod u+x "${SERVER_BINARY}"
 /usr/local/bin/windrose-configure
+/usr/local/bin/windrose-report --watch &
 
-cd "${SERVER_ROOT}"
+cd "${APPLICATION_ROOT}"
 echo "Starting the native Windrose Linux dedicated server..."
+echo "Official upstream image digest: ${WINDROSE_UPSTREAM_DIGEST:-unknown}"
 exec "${SERVER_BINARY}" R5 -log "$@"
