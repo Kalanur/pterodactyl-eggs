@@ -7,12 +7,16 @@ on:
       - images/windrose-native/**
       - .github/workflows/build-windrose-native.yml
   schedule:
-    - cron: "23 4 * * 1"
+    - cron: "23 4 * * *"
   workflow_dispatch:
 
 permissions:
   contents: read
   packages: write
+
+concurrency:
+  group: windrose-native-runtime
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -20,6 +24,20 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: docker/setup-buildx-action@v3
+      - name: Resolve official Windrose image digest
+        id: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          image="docker.io/windroseserver/windroseserver:latest"
+          digest="$(docker buildx imagetools inspect "${image}" | awk '/^Digest:/ {print $2; exit}')"
+          test -n "${digest}"
+          short="${digest#sha256:}"
+          short="${short:0:12}"
+          echo "image=${image}" >> "${GITHUB_OUTPUT}"
+          echo "digest=${digest}" >> "${GITHUB_OUTPUT}"
+          echo "short=${short}" >> "${GITHUB_OUTPUT}"
+          echo "Building from ${image}@${digest}"
       - uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -31,8 +49,15 @@ jobs:
           pull: true
           push: true
           platforms: linux/amd64
+          build-args: |
+            WINDROSE_UPSTREAM_IMAGE=${{ steps.upstream.outputs.image }}@${{ steps.upstream.outputs.digest }}
+            WINDROSE_UPSTREAM_DIGEST=${{ steps.upstream.outputs.digest }}
           tags: |
             ghcr.io/kalanur/pterodactyl-windrose-native:latest
             ghcr.io/kalanur/pterodactyl-windrose-native:${{ github.sha }}
+            ghcr.io/kalanur/pterodactyl-windrose-native:upstream-${{ steps.upstream.outputs.short }}
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.base.digest=${{ steps.upstream.outputs.digest }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
