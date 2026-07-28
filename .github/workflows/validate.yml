@@ -1,0 +1,46 @@
+name: Validate eggs
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  windrose-native:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: games/windrose/native-linux
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate shell syntax
+        run: bash -n scripts/install.sh
+      - name: Validate runtime shell syntax
+        working-directory: images/windrose-native
+        run: |
+          bash -n pterodactyl-entrypoint.sh
+          bash -n windrose-start.sh
+      - name: Run configuration tests
+        run: python3 -m unittest discover -s tests -v
+      - name: Verify generated egg
+        run: |
+          cp egg-windrose-native-linux.json /tmp/egg-before.json
+          python3 tools/generate_egg.py
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          before = json.loads(Path('/tmp/egg-before.json').read_text())
+          after = json.loads(Path('egg-windrose-native-linux.json').read_text())
+          before.pop('exported_at', None)
+          after.pop('exported_at', None)
+          if before != after:
+              raise SystemExit('Committed egg differs from generated output')
+          PY
+      - name: Build runtime image
+        uses: docker/build-push-action@v6
+        with:
+          context: images/windrose-native
+          push: false
+          platforms: linux/amd64
