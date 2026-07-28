@@ -1,8 +1,13 @@
 #!/bin/bash
 set -euo pipefail
 
-cd /home/container
-mkdir -p /home/container/R5/Saved/.windrose-var-tmp
+readonly SERVER_ROOT="${WINDROSE_SERVER_ROOT:-/home/container}"
+
+mkdir -p \
+    "${SERVER_ROOT}/R5/Saved/.windrose-var-tmp" \
+    "${SERVER_ROOT}/R5"
+
+cd "${SERVER_ROOT}"
 
 if [[ -n "${STARTUP:-}" ]]; then
     exec /bin/bash -lc "${STARTUP}"
