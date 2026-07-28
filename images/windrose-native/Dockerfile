@@ -9,7 +9,6 @@ ARG WINDROSE_UPSTREAM_DIGEST=unknown
 LABEL org.opencontainers.image.title="Windrose Native Linux Pterodactyl Runtime"
 LABEL org.opencontainers.image.description="Pterodactyl-compatible runtime containing the official native Windrose dedicated server payload."
 LABEL org.opencontainers.image.source="https://github.com/Kalanur/pterodactyl-eggs"
-LABEL org.opencontainers.image.licenses="MIT"
 LABEL org.opencontainers.image.base.name="${WINDROSE_UPSTREAM_IMAGE}"
 LABEL org.opencontainers.image.base.digest="${WINDROSE_UPSTREAM_DIGEST}"
 
@@ -41,6 +40,7 @@ RUN rm -rf /opt/windrose/R5/Saved \
     && ln -s /home/container/R5/Saved/.windrose-var-tmp /var/tmp/R5 \
     && chmod 0755 /opt/windrose/R5/Binaries/Linux/WindroseServer-Linux-Shipping
 
+COPY NOTICE.md /usr/share/doc/windrose-pterodactyl/NOTICE.md
 COPY --chmod=0755 pterodactyl-entrypoint.sh /entrypoint.sh
 COPY --chmod=0755 windrose-start.sh /usr/local/bin/windrose-start
 COPY --chmod=0755 windrose-configure.py /usr/local/bin/windrose-configure
