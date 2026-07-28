@@ -12,9 +12,18 @@ in this repository.
 
 ## Status
 
-Experimental until tested on a real Wings node with a new world, migration from
-the Wine egg, invite-code and direct connections, reinstall/update, graceful
-shutdown and backup restore. Do not migrate both production servers together.
+Successfully tested on a real amd64 Wings node with:
+
+- extraction of the official Docker payload
+- creation of a fresh world
+- persistent server identity and generated invite code
+- successful Windrose backend authentication and registration
+- native Unreal Engine Linux server startup
+
+Still experimental until migration from the Wine egg, invite-code client
+connection, direct connection, graceful shutdown/restart, reinstall/update and
+backup restore have been verified. Do not migrate both production servers
+together.
 
 ## Installation
 
@@ -28,6 +37,18 @@ Docker socket. Image download and extraction are staged below
 `/mnt/server/.windrose-install` because the installer container's `/tmp`
 filesystem may be too small for the official image. The staging directory is
 removed automatically after a successful installation.
+
+## Runtime backup path
+
+Windrose writes temporary internal world backups below `/var/tmp/R5`. Wings
+normally runs game containers with a read-only root filesystem, so the runtime
+image maps that path to:
+
+```text
+/home/container/R5/Saved/.windrose-var-tmp
+```
+
+This keeps the path writable and includes it in the persistent server volume.
 
 ## Updating
 
