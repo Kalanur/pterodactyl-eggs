@@ -14,7 +14,7 @@ jobs:
       run:
         working-directory: games/windrose/native-linux
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Validate shell syntax
         run: bash -n scripts/install.sh
       - name: Validate runtime shell syntax
