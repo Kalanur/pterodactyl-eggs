@@ -15,8 +15,11 @@ RUN apt-get update \
         procps \
         python3 \
         tini \
+        xdg-user-dirs \
     && rm -rf /var/lib/apt/lists/* \
-    && useradd --create-home --home-dir /home/container --shell /bin/bash container
+    && useradd --create-home --home-dir /home/container --shell /bin/bash container \
+    && rm -rf /var/tmp/R5 \
+    && ln -s /home/container/R5/Saved/.windrose-var-tmp /var/tmp/R5
 
 COPY --chmod=0755 pterodactyl-entrypoint.sh /entrypoint.sh
 COPY --chmod=0755 windrose-start.sh /usr/local/bin/windrose-start
