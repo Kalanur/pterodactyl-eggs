@@ -7,6 +7,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   windrose-native:
     runs-on: ubuntu-latest
@@ -17,11 +21,12 @@ jobs:
       - uses: actions/checkout@v6
       - name: Validate shell syntax
         run: bash -n scripts/install.sh
-      - name: Validate runtime shell syntax
+      - name: Validate runtime scripts
         working-directory: images/windrose-native
         run: |
           bash -n pterodactyl-entrypoint.sh
           bash -n windrose-start.sh
+          python3 -m py_compile windrose-configure.py windrose-report.py
       - name: Run configuration tests
         run: python3 -m unittest discover -s tests -v
       - name: Verify generated egg
@@ -42,5 +47,6 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: images/windrose-native
+          pull: true
           push: false
           platforms: linux/amd64
