@@ -5,7 +5,7 @@ Embark on a PvE survival adventure in the Age of Piracy. Fight on land and sea, 
 ## Available eggs
 
 - `egg-windrose.json` installs the Windows dedicated server through SteamCMD and runs it with Wine.
-- `egg-windrose-linux.json` runs the native Linux server payload distributed through the publisher's Docker image using `ghcr.io/ptero-eggs/games:windrose`.
+- `egg-windrose-linux.json` runs the native Linux server payload distributed through the publisher's Docker image using `ghcr.io/pterodactyl/games:windrose`.
 
 The Linux egg stores only persistent server data in the Pterodactyl volume. Application updates are delivered through rebuilt container images and do not require a Pterodactyl reinstall.
 
