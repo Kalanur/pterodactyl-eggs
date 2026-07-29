@@ -7,7 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 INSTALL_SCRIPT = (ROOT / "scripts/install.sh").read_text(encoding="utf-8")
-OUTPUT = ROOT / "egg-windrose-native-linux.json"
+OUTPUT = ROOT / "egg-windrose-linux.json"
 
 
 def variable(name, description, env, default, viewable, editable, rules, field_type="text"):
@@ -27,12 +27,13 @@ egg = {
     "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY tools/generate_egg.py",
     "meta": {"version": "PTDL_v2", "update_url": None},
     "exported_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-    "name": "Windrose Native Linux",
+    "name": "Windrose - Linux",
     "author": "1725073+Kalanur@users.noreply.github.com",
     "description": (
-        "Runs the official native Linux Windrose dedicated server from an automatically "
-        "rebuilt runtime image. Saves and ServerDescription.json remain in the Pterodactyl "
-        "volume while application updates are delivered by pulling a new container image."
+        "Runs the Linux Windrose dedicated server payload distributed through the publisher's "
+        "Docker image. The community-maintained Pterodactyl runtime image keeps saves and "
+        "ServerDescription.json persistent while application updates are delivered through "
+        "container image updates."
     ),
     "features": [],
     "docker_images": {
