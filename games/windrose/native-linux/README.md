@@ -1,9 +1,10 @@
-# Windrose Native Linux
+# Windrose - Linux
 
-A Pterodactyl egg for the official native Linux Windrose dedicated server.
+A Pterodactyl egg for the Linux Windrose dedicated server payload distributed
+through the publisher's Docker image.
 
-The runtime image is built from `windroseserver/windroseserver:latest` and
-contains the official application payload. Only persistent data is stored in the
+The community-maintained runtime image is built from
+`windroseserver/windroseserver:latest`. Only persistent data is stored in the
 Pterodactyl server volume:
 
 - `R5/Saved/`
@@ -12,14 +13,23 @@ Pterodactyl server volume:
 
 ## Status
 
-Successfully tested on a real amd64 Wings node with installation, fresh world
-creation, generated invite code, backend registration and client connection.
-Migration, direct connection, graceful shutdown/restart, image update and backup
-restore still need repeated testing before both production servers are migrated.
+Successfully tested on a real amd64 Wings node with:
+
+- fresh installation and world creation;
+- imported existing world;
+- generated and preserved invite code and world ID;
+- invite-code/P2P connection;
+- direct connection through the primary allocation over TCP and UDP;
+- periodic internal world backups;
+- synchronous backup and clean RocksDB close during shutdown;
+- persisted gameplay state after stop and restart;
+- restore into a newly created Pterodactyl server using only `R5/Saved/` and
+  `R5/ServerDescription.json`;
+- runtime image update without reinstall while preserving the world state.
 
 ## Installation
 
-1. Import `egg-windrose-native-linux.json` into Pterodactyl.
+1. Import `egg-windrose-linux.json` into Pterodactyl.
 2. Create a server on an amd64 node.
 3. For Direct Connect, expose the primary allocation through both TCP and UDP.
 
@@ -49,21 +59,31 @@ No Panel API token is required or stored in the game container.
 
 ## Automated application updates
 
-A scheduled GitHub Actions workflow checks the official Windrose image every
-night and rebuilds:
+A scheduled GitHub Actions workflow checks the publisher's Windrose image every
+night. A new runtime image is built only when the upstream digest changes.
+Repository changes and manually started workflow runs always build.
+
+The default image is:
 
 ```text
 ghcr.io/kalanur/pterodactyl-windrose-native:latest
 ```
 
 Wings pulls that image when the server container is recreated. Therefore a
-normal server restart after the new image has been published updates the
-Windrose application while reusing the existing save and server description.
-No Pterodactyl reinstall is required for normal game updates.
+normal server restart after a new image has been published updates the Windrose
+application while reusing the existing save and server description. No
+Pterodactyl reinstall is required for normal game updates.
 
-Immutable tags are also published as `upstream-<digest-prefix>` and by Git commit
-SHA to make image rollback possible. Always create a save backup before applying
-a new Windrose version because the game may migrate its data format.
+The workflow publishes these tags:
+
+- `latest` for normal automatic updates;
+- `windrose-<publisher-version>` when a non-latest Docker Hub tag points to the
+  same upstream digest;
+- `upstream-<digest-prefix>` for exact upstream payload identification;
+- the repository Git commit SHA for exact wrapper identification.
+
+Always create a save backup before applying a new Windrose version because the
+game may migrate its data format.
 
 ## Runtime backup path
 
@@ -75,17 +95,16 @@ maps that path to:
 /home/container/R5/Saved/.windrose-var-tmp
 ```
 
-## Migration from the Wine or first native prototype egg
+## Migration from the Wine egg or an earlier prototype
 
 1. Create a full backup.
-2. Clone the server or copy its files into a disposable test server.
-3. Change the test server to this egg and runtime image.
-4. Leave generated variables empty unless intentionally importing specific values.
+2. Create a disposable server using this egg.
+3. Copy `R5/Saved/` and `R5/ServerDescription.json` from the source server.
+4. Leave generated variables empty unless intentionally overriding specific values.
 5. Start and verify world, persistent server ID, invite code, password and connectivity.
-6. Remove legacy application files from the server volume only after successful testing.
-7. Migrate production one server at a time.
+6. Remove legacy application files from the old server volume only after successful testing.
 
-The new runtime ignores old application files in `/home/container`; they only
+The runtime ignores old application files in `/home/container`; they only
 consume disk space until manually removed.
 
 ## Development
