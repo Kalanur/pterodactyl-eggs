@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  windrose-native:
+  windrose-linux:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -31,13 +31,13 @@ jobs:
         run: python3 -m unittest discover -s tests -v
       - name: Verify generated egg
         run: |
-          cp egg-windrose-native-linux.json /tmp/egg-before.json
+          cp egg-windrose-linux.json /tmp/egg-before.json
           python3 tools/generate_egg.py
           python3 - <<'PY'
           import json
           from pathlib import Path
           before = json.loads(Path('/tmp/egg-before.json').read_text())
-          after = json.loads(Path('egg-windrose-native-linux.json').read_text())
+          after = json.loads(Path('egg-windrose-linux.json').read_text())
           before.pop('exported_at', None)
           after.pop('exported_at', None)
           if before != after:
