@@ -52,6 +52,7 @@ jobs:
           build-args: |
             WINDROSE_UPSTREAM_IMAGE=${{ steps.upstream.outputs.image }}@${{ steps.upstream.outputs.digest }}
             WINDROSE_UPSTREAM_DIGEST=${{ steps.upstream.outputs.digest }}
+            WINDROSE_RUNTIME_REVISION=${{ github.sha }}
           tags: |
             ghcr.io/kalanur/pterodactyl-windrose-native:latest
             ghcr.io/kalanur/pterodactyl-windrose-native:${{ github.sha }}
