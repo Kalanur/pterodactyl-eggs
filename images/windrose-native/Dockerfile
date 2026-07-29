@@ -5,6 +5,7 @@ FROM --platform=linux/amd64 debian:trixie-slim
 
 ARG WINDROSE_UPSTREAM_IMAGE=docker.io/windroseserver/windroseserver:latest
 ARG WINDROSE_UPSTREAM_DIGEST=unknown
+ARG WINDROSE_RUNTIME_REVISION=unknown
 
 LABEL org.opencontainers.image.title="Windrose Native Linux Pterodactyl Runtime"
 LABEL org.opencontainers.image.description="Pterodactyl-compatible runtime containing the official native Windrose dedicated server payload."
@@ -16,7 +17,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
     WINDROSE_APPLICATION_ROOT=/opt/windrose \
     WINDROSE_SERVER_ROOT=/home/container \
     WINDROSE_CONFIG_PATH=/home/container/R5/ServerDescription.json \
-    WINDROSE_UPSTREAM_DIGEST=${WINDROSE_UPSTREAM_DIGEST}
+    WINDROSE_UPSTREAM_DIGEST=${WINDROSE_UPSTREAM_DIGEST} \
+    WINDROSE_RUNTIME_REVISION=${WINDROSE_RUNTIME_REVISION}
 
 RUN apt-get update \
     && apt-get install --yes --no-install-recommends \
