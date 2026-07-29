@@ -15,5 +15,6 @@ fi
 
 cd "${APPLICATION_ROOT}"
 echo "Starting the native Windrose Linux dedicated server..."
+echo "Runtime image revision: ${WINDROSE_RUNTIME_REVISION:-unknown}"
 echo "Official upstream image digest: ${WINDROSE_UPSTREAM_DIGEST:-unknown}"
 exec "${SERVER_BINARY}" R5 -log "$@"
