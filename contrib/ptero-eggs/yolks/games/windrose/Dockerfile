@@ -9,7 +9,7 @@ ARG WINDROSE_RUNTIME_REVISION=unknown
 
 LABEL org.opencontainers.image.title="Windrose Pterodactyl Runtime"
 LABEL org.opencontainers.image.description="Pterodactyl runtime containing the native Linux Windrose dedicated-server payload."
-LABEL org.opencontainers.image.source="https://github.com/Ptero-Eggs/yolks"
+LABEL org.opencontainers.image.source="https://github.com/pterodactyl/yolks"
 LABEL org.opencontainers.image.base.name="${WINDROSE_UPSTREAM_IMAGE}"
 LABEL org.opencontainers.image.base.digest="${WINDROSE_UPSTREAM_DIGEST}"
 
