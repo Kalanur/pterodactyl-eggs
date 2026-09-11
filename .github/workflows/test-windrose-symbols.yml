@@ -1,0 +1,114 @@
+name: Test Windrose symbol removal
+
+on:
+  push:
+    branches: [test-windrose-symbols]
+    paths:
+      - tests/windrose-symbols/**
+      - .github/workflows/test-windrose-symbols.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: windrose-symbol-test-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  IMAGE: ghcr.io/kalanur/pterodactyl-windrose-native
+  UPSTREAM_DIGEST: sha256:2ccfe3319d0b4f9637ba08dbefb44f8c64c97309ba1b5e4c152e418ef63755d7
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/test-windrose-symbols'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [baseline, stripped]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: docker/setup-buildx-action@v3
+      - name: Prepare pinned Dockerfile
+        run: python3 tests/windrose-symbols/prepare.py '${{ matrix.variant }}'
+      - name: Build test image
+        uses: docker/build-push-action@v6
+        with:
+          context: tests/windrose-symbols/runtime
+          file: tests/windrose-symbols/runtime/Dockerfile.test
+          platforms: linux/amd64
+          load: true
+          tags: windrose-symbol-test:${{ matrix.variant }}
+          build-args: |
+            WINDROSE_UPSTREAM_IMAGE=docker.io/windroseserver/windroseserver@${{ env.UPSTREAM_DIGEST }}
+            WINDROSE_UPSTREAM_DIGEST=${{ env.UPSTREAM_DIGEST }}
+            WINDROSE_RUNTIME_REVISION=${{ github.sha }}
+      - name: Measure image and payload; validate helpers
+        env:
+          VARIANT: ${{ matrix.variant }}
+        run: |
+          set -euo pipefail
+          mkdir -p results
+          image="windrose-symbol-test:${VARIANT}"
+          docker image inspect "$image" > results/image.json
+          docker run --rm -i --network none --entrypoint python3 "$image" - < tests/windrose-symbols/measure.py > results/payload.json
+          docker run --rm --network none --entrypoint /bin/bash "$image" -c 'bash -n /entrypoint.sh && bash -n /usr/local/bin/windrose-start && /usr/local/bin/windrose-configure && test -s /home/container/R5/ServerDescription.json' > results/helper-check.log 2>&1
+          cp tests/windrose-symbols/runtime/Dockerfile.test results/
+          printf '%s\n' "$GITHUB_SHA" > results/commit.txt
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish commit-specific test image
+        env:
+          VARIANT: ${{ matrix.variant }}
+        run: |
+          set -euo pipefail
+          tag="${IMAGE}:symbol-test-${VARIANT}-${GITHUB_SHA}"
+          docker tag "windrose-symbol-test:${VARIANT}" "$tag"
+          docker push "$tag"
+          docker image inspect "$tag" --format '{{json .RepoDigests}}' > results/published-digests.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windrose-${{ matrix.variant }}
+          path: results/
+
+  compare:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v4
+        with:
+          name: windrose-baseline
+          path: results/baseline
+      - uses: actions/download-artifact@v4
+        with:
+          name: windrose-stripped
+          path: results/stripped
+      - name: Compare retained files and sizes
+        run: python3 tests/windrose-symbols/compare.py
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Update Egg test tags after successful comparison
+        run: |
+          set -euo pipefail
+          for variant in baseline stripped; do
+            docker buildx imagetools create --prefer-index=false \
+              --tag "${IMAGE}:symbol-test-${variant}" \
+              "${IMAGE}:symbol-test-${variant}-${GITHUB_SHA}"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windrose-comparison-and-egg
+          path: |
+            comparison.md
+            tests/windrose-symbols/egg-windrose-symbol-test.json
