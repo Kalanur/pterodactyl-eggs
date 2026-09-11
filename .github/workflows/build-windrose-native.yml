@@ -42,16 +42,16 @@ jobs:
             curl --fail --silent --show-error \
               "https://hub.docker.com/v2/repositories/${repository}/tags?page_size=100&ordering=last_updated" |
               python3 -c '
-import json
-import re
-import sys
+          import json
+          import re
+          import sys
 
-payload = json.load(sys.stdin)
-for item in payload.get("results", []):
-    name = item.get("name", "")
-    if name != "latest" and re.fullmatch(r"[A-Za-z0-9_.-]+", name):
-        print(name)
-'
+          payload = json.load(sys.stdin)
+          for item in payload.get("results", []):
+              name = item.get("name", "")
+              if name != "latest" and re.fullmatch(r"[A-Za-z0-9_.-]+", name):
+                  print(name)
+          '
           )
 
           version=""

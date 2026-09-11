@@ -1,6 +1,11 @@
 ARG WINDROSE_UPSTREAM_IMAGE=docker.io/windroseserver/windroseserver:latest
 FROM --platform=linux/amd64 ${WINDROSE_UPSTREAM_IMAGE} AS windrose-upstream
 
+USER root
+# Remove symbols before COPY so they never enter a runtime image layer.
+RUN rm -f /home/ue_user/app/R5/Binaries/Linux/*.debug \
+    /home/ue_user/app/R5/Binaries/Linux/*.sym
+
 FROM --platform=linux/amd64 debian:trixie-slim
 
 ARG WINDROSE_UPSTREAM_IMAGE=docker.io/windroseserver/windroseserver:latest
