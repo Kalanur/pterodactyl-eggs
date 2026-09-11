@@ -15,6 +15,6 @@ fi
 
 cat <<'MESSAGE'
 Windrose persistent storage initialized.
-The official native server payload is included in the runtime image and is updated by pulling a newly built image.
+The Linux server payload is included in the community-maintained runtime image and is updated by pulling a newly built image.
 R5/Saved and R5/ServerDescription.json remain in the Pterodactyl server volume.
 MESSAGE
